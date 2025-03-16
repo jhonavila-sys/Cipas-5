@@ -1,0 +1,22 @@
+# Inicializamos listas para almacenar los nombres y calificaciones
+nombres = []
+calificaciones = []
+
+# Ingresamos los datos de 3 estudiantes
+for i in range(3):
+    nombre = input(f"Ingrese el nombre del estudiante {i + 1}: ")
+    calificacion = float(input(f"Ingrese la calificación de {nombre}: "))
+    
+    # Agregamos los datos a las listas
+    nombres.append(nombre)
+    calificaciones.append(calificacion)
+
+# Calculamos el promedio de las calificaciones
+promedio = sum(calificaciones) / len(calificaciones)
+
+# Mostramos los resultados
+print("\nResultados:")
+for i in range(3):
+    print(f"Estudiante: {nombres[i]}, Calificación: {calificaciones[i]}")
+
+print(f"\nEl promedio de las calificaciones es: {promedio:.2f}")
