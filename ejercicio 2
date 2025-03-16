@@ -1,0 +1,46 @@
+class Estudiante:
+    def __init__(self, nombre, calificacion):
+        self.nombre = nombre
+        self.calificacion = calificacion
+
+    def mostrar_datos(self):
+        return f"Estudiante: {self.nombre}, Calificación: {self.calificacion}"
+
+class GrupoEstudiantes:
+    def __init__(self):
+        self.estudiantes = []
+
+    def agregar_estudiante(self, estudiante):
+        self.estudiantes.append(estudiante)
+
+    def calcular_promedio(self):
+        if not self.estudiantes:
+            return 0
+        total_calificaciones = sum(estudiante.calificacion for estudiante in self.estudiantes)
+        return total_calificaciones / len(self.estudiantes)
+
+    def mostrar_estudiantes(self):
+        for estudiante in self.estudiantes:
+            print(estudiante.mostrar_datos())
+
+# Programa principal
+def main():
+    grupo = GrupoEstudiantes()
+
+    # Ingresamos los datos de 3 estudiantes
+    for i in range(3):
+        nombre = input(f"Ingrese el nombre del estudiante {i + 1}: ")
+        calificacion = float(input(f"Ingrese la calificación de {nombre}: "))
+        estudiante = Estudiante(nombre, calificacion)
+        grupo.agregar_estudiante(estudiante)
+
+    # Mostramos los resultados
+    print("\nResultados:")
+    grupo.mostrar_estudiantes()
+
+    # Calculamos y mostramos el promedio
+    promedio = grupo.calcular_promedio()
+    print(f"\nEl promedio de las calificaciones es: {promedio:.2f}")
+
+if __name__ == "__main__":
+    main()
