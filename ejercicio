@@ -1,4 +1,4 @@
-# Inicializamos listas para almacenar los nombres y calificaciones
+# Inicializamos listas para almacenar los nombres y notas
 nombres = []
 calificaciones = []
 
