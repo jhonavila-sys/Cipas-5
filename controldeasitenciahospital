@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control Hospitalario</title>
+  <style>
+    /* Reset & base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f3f6f9;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+
+    main {
+      flex: 1;
+      padding: 1rem 1.5rem 3rem 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Navigation tabs */
+    nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    nav button {
+      background: #e2e6ea;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #495057;
+      transition: background 0.3s, color 0.3s;
+      flex-grow: 1;
+      max-width: 150px;
+    }
+
+    nav button.active, nav button:hover {
+      background: #007bff;
+      color: white;
+      box-shadow: 0 0 8px rgba(0,123,255,0.6);
+    }
+
+    section {
+      display: none;
+    }
+
+    section.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    /* Forms */
+    form {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 0 12px rgb(0 0 0 / 0.05);
+      margin-bottom: 2rem;
+      max-width: 100%;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      color: #444;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1.5px solid #ced4da;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 6px rgba(0,123,255,0.3);
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      transition: background 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #0056b3;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgb(0 0 0 / 0.05);
+      margin-bottom: 2rem;
+    }
+
+    th, td {
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    tr:hover {
+      background: #ecf2ff;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      nav button {
+        max-width: 100%;
+        flex-grow: unset;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        display: none;
+      }
+      tr {
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 0.75rem;
+      }
+      td {
+        border: none;
+        padding-left: 50%;
+        position: relative;
+        white-space: pre-line;
+      }
+      td::before {
+        position: absolute;
+        left: 1rem;
+        top: 0.6rem;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #555;
+      }
+      td:nth-of-type(1)::before { content: attr(data-label-1); }
+      td:nth-of-type(2)::before { content: attr(data-label-2); }
+      td:nth-of-type(3)::before { content: attr(data-label-3); }
+      td:nth-of-type(4)::before { content: attr(data-label-4); }
+      td:nth-of-type(5)::before { content: attr(data-label-5); }
+      td:nth-of-type(6)::before { content: attr(data-label-6); }
+    }
+  </style>
+</head>
+<body>
+<header>Control Hospitalario</header>
+<main>
+  <nav role="tablist" aria-label="Secciones del sistema">
+    <button role="tab" aria-selected="true" aria-controls="sec-login" id="tab-login" class="active">Login</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-users" id="tab-users">Usuarios & Roles</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-schedules" id="tab-schedules">Horarios</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-attendance" id="tab-attendance">Asistencia</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-shifts" id="tab-shifts">Turnos</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-trainings" id="tab-trainings">Capacitaciones</button>
+    <button role="tab" aria-selected="false" aria-controls="sec-performance" id="tab-performance">Desempeño</button>
+  </nav>
+
+  <!-- Login -->
+  <section id="sec-login" role="tabpanel" tabindex="0" aria-labelledby="tab-login" class="active">
+    <form id="loginForm" aria-label="Formulario de inicio de sesión">
+      <label for="selectUserLogin">Selecciona un usuario para login:</label>
+      <select id="selectUserLogin" required>
+        <!-- Filled dynamically -->
+      </select>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+    <div id="loginWelcome" style="margin-top:1rem; font-weight:600; color: #007bff;"></div>
+  </section>
+
+  <!-- User & Roles management -->
+  <section id="sec-users" role="tabpanel" tabindex="0" aria-labelledby="tab-users">
+    <h2>Usuarios & Roles</h2>
+
+    <form id="addUserForm" aria-label="Formulario para agregar usuario">
+      <label for="userId">ID usuario:</label>
+      <input type="text" id="userId" required/>
+      <label for="userName">Nombre:</label>
+      <input type="text" id="userName" required/>
+      <label for="userRole">Rol:</label>
+      <select id="userRole" required>
+        <!-- Filled dynamically -->
+      </select>
+      <button type="submit">Agregar Usuario</button>
+    </form>
+
+    <form id="addRoleForm" aria-label="Formulario para agregar rol" style="margin-top: 1.5rem;">
+      <label for="roleName">Nombre del Rol:</label>
+      <input type="text" id="roleName" required placeholder="Ej. Doctor, Enfermero"/>
+      <fieldset style="border: 1px solid #ddd; border-radius:6px; padding:1rem;">
+        <legend>Permisos (Ctrl+click para múltiples)</legend>
+        <select id="rolePermissions" multiple size="7" style="width:100%;">
+          <option value="VIEW_SCHEDULE">Ver Horarios</option>
+          <option value="MANAGE_SCHEDULE">Gestionar Horarios</option>
+          <option value="RECORD_ATTENDANCE">Registrar Asistencia</option>
+          <option value="ASSIGN_SHIFTS">Asignar Turnos</option>
+          <option value="MANAGE_ROLES">Gestionar Roles</option>
+          <option value="TRACK_TRAININGS">Seguimiento Capacitaciones</option>
+          <option value="REVIEW_PERFORMANCE">Revisión de Desempeño</option>
+        </select>
+      </fieldset>
+      <button type="submit" style="margin-top:0.75rem;">Agregar Rol</button>
+    </form>
+
+    <h3>Usuarios Registrados</h3>
+    <table aria-label="Tabla de usuarios">
+      <thead>
+        <tr>
+          <th>ID</th><th>Nombre</th><th>Rol</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <!-- Users will be listed here -->
+      </tbody>
+    </table>
+
+    <h3>Roles Registrados</h3>
+    <table aria-label="Tabla de roles">
+      <thead>
+        <tr>
+          <th>Rol</th><th>Permisos</th>
+        </tr>
+      </thead>
+      <tbody id="rolesTableBody">
+        <!-- Roles listed here -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Schedule management -->
+  <section id="sec-schedules" role="tabpanel" tabindex="0" aria-labelledby="tab-schedules">
+    <h2>Gestión de Horarios</h2>
+
+    <form id="addScheduleForm" aria-label="Formulario para agregar horario">
+      <label for="scheduleUser">Usuario:</label>
+      <select id="scheduleUser" required></select>
+      <label for="scheduleDate">Fecha:</label>
+      <input type="date" id="scheduleDate" required />
+      <label for="startTime">Inicio (hora):</label>
+      <input type="time" id="startTime" required />
+      <label for="endTime">Fin (hora):</label>
+      <input type="time" id="endTime" required />
+      <button type="submit">Agregar Horario</button>
+    </form>
+
+    <h3>Horarios Registrados</h3>
+    <table aria-label="Tabla de horarios">
+      <thead>
+        <tr><th>Usuario</th><th>Fecha</th><th>Inicio</th><th>Fin</th></tr>
+      </thead>
+      <tbody id="schedulesTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Attendance control -->
+  <section id="sec-attendance" role="tabpanel" tabindex="0" aria-labelledby="tab-attendance">
+    <h2>Control de Asistencia</h2>
+
+    <form id="recordAttendanceForm" aria-label="Formulario para registrar asistencia">
+      <label for="attendanceRecorder">Usuario que registra:</label>
+      <select id="attendanceRecorder" required></select>
+      <label for="attendanceUser">Usuario a registrar:</label>
+      <select id="attendanceUser" required></select>
+      <label for="attendanceDate">Fecha:</label>
+      <input type="date" id="attendanceDate" required />
+      <label for="attendancePresent">¿Presente?</label>
+      <select id="attendancePresent" required>
+        <option value="true">Sí</option>
+        <option value="false">No</option>
+      </select>
+      <button type="submit">Registrar Asistencia</button>
+    </form>
+
+    <h3>Asistencias Registradas</h3>
+    <table aria-label="Tabla de asistencias">
+      <thead><tr><th>Usuario</th><th>Fecha</th><th>Presente</th></tr></thead>
+      <tbody id="attendanceTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Shift assignments -->
+  <section id="sec-shifts" role="tabpanel" tabindex="0" aria-labelledby="tab-shifts">
+    <h2>Asignación de Turnos</h2>
+
+    <form id="assignShiftForm" aria-label="Formulario para asignar turnos">
+      <label for="shiftAssigner">Usuario que asigna:</label>
+      <select id="shiftAssigner" required></select>
+      <label for="shiftUser">Usuario al que se asigna:</label>
+      <select id="shiftUser" required></select>
+      <label for="shiftDate">Fecha del turno:</label>
+      <input type="date" id="shiftDate" required />
+      <label for="shiftName">Nombre del turno:</label>
+      <input type="text" id="shiftName" placeholder="Ej. Turno Mañana" required />
+      <button type="submit">Asignar Turno</button>
+    </form>
+
+    <h3>Turnos Asignados</h3>
+    <table aria-label="Tabla de turnos">
+      <thead><tr><th>Usuario</th><th>Fecha</th><th>Turno</th></tr></thead>
+      <tbody id="shiftsTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Trainings -->
+  <section id="sec-trainings" role="tabpanel" tabindex="0" aria-labelledby="tab-trainings">
+    <h2>Seguimiento de Capacitaciones</h2>
+
+    <form id="assignTrainingForm" aria-label="Formulario para asignar capacitación">
+      <label for="trainingAssigner">Usuario que asigna:</label>
+      <select id="trainingAssigner" required></select>
+      <label for="trainingUser">Usuario capacitado:</label>
+      <select id="trainingUser" required></select>
+      <label for="trainingTitle">Nombre de la capacitación:</label>
+      <input type="text" id="trainingTitle" placeholder="Ej. Primeros Auxilios" required />
+      <label for="trainingDate">Fecha:</label>
+      <input type="date" id="trainingDate" required />
+      <button type="submit">Asignar Capacitación</button>
+    </form>
+
+    <form id="completeTrainingForm" aria-label="Formulario para completar capacitación" style="margin-top:1rem;">
+      <label for="completeTrainingUser">Usuario que completa:</label>
+      <select id="completeTrainingUser" required></select>
+      <label for="completeTrainingTitle">Nombre capacitación a completar:</label>
+      <select id="completeTrainingTitle" required>
+        <!-- Filled dynamically -->
+      </select>
+      <button type="submit">Marcar como completada</button>
+    </form>
+
+    <h3>Capacitaciones Registradas</h3>
+    <table aria-label="Tabla de capacitaciones">
+      <thead><tr><th>Usuario</th><th>Capacitación</th><th>Fecha</th><th>Completada</th></tr></thead>
+      <tbody id="trainingsTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Performance -->
+  <section id="sec-performance" role="tabpanel" tabindex="0" aria-labelledby="tab-performance">
+    <h2>Seguimiento de Desempeño</h2>
+
+    <form id="addPerformanceForm" aria-label="Formulario para agregar evaluación de desempeño">
+      <label for="performanceReviewer">Usuario que evalúa:</label>
+      <select id="performanceReviewer" required></select>
+      <label for="performanceUser">Usuario evaluado:</label>
+      <select id="performanceUser" required></select>
+      <label for="performanceDate">Fecha:</label>
+      <input type="date" id="performanceDate" required />
+      <label for="performanceNotes">Notas:</label>
+      <textarea id="performanceNotes" rows="3" required></textarea>
+      <label for="performanceScore">Puntaje (1-10):</label>
+      <input type="number" id="performanceScore" min="1" max="10" required />
+      <button type="submit">Agregar Evaluación</button>
+    </form>
+
+    <h3>Evaluaciones de Desempeño Registradas</h3>
+    <table aria-label="Tabla de evaluaciones de desempeño">
+      <thead><tr><th>Usuario</th><th>Fecha</th><th>Puntaje</th><th>Notas</th></tr></thead>
+      <tbody id="performanceTableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+  (() => {
+    // Permission enum
+    const Permissions = {
+      VIEW_SCHEDULE: 'VIEW_SCHEDULE',
+      MANAGE_SCHEDULE: 'MANAGE_SCHEDULE',
+      RECORD_ATTENDANCE: 'RECORD_ATTENDANCE',
+      ASSIGN_SHIFTS: 'ASSIGN_SHIFTS',
+      MANAGE_ROLES: 'MANAGE_ROLES',
+      TRACK_TRAININGS: 'TRACK_TRAININGS',
+      REVIEW_PERFORMANCE: 'REVIEW_PERFORMANCE',
+    };
+
+    // Role class
+    class Role {
+      constructor(name) {
+        this.name = name;
+        this.permissions = new Set();
+      }
+      addPermission(p) { this.permissions.add(p); }
+      hasPermission(p) { return this.permissions.has(p); }
+      toString() { return `${this.name} [${[...this.permissions].join(', ')}]`; }
+    }
+
+    // User class
+    class User {
+      constructor(id, name, role) {
+        this.id = id;
+        this.name = name;
+        this.role = role;
+      }
+      can(permission) {
+        return this.role && this.role.hasPermission(permission);
+      }
+      toString() { return `${this.name} (${this.role.name})`; }
+    }
+
+    // Data arrays
+    const roles = [];
+    const users = [];
+    const schedules = [];
+    const attendances = [];
+    const shifts = [];
+    const trainings = [];
+    const performanceReviews = [];
+
+    // Current logged in user
+    let currentUser = null;
+
+    // DOM references for reuse
+    const dom = {
+      navButtons: [...document.querySelectorAll('nav button')],
+      sections: [...document.querySelectorAll('main > section')],
+      loginSelect: document.getElementById('selectUserLogin'),
+      loginForm: document.getElementById('loginForm'),
+      loginWelcome: document.getElementById('loginWelcome'),
+
+      userRoleSelect: document.getElementById('userRole'),
+      userIdInput: document.getElementById('userId'),
+      userNameInput: document.getElementById('userName'),
+      addUserForm: document.getElementById('addUserForm'),
+      roleNameInput: document.getElementById('roleName'),
+      rolePermissionsSelect: document.getElementById('rolePermissions'),
+      addRoleForm: document.getElementById('addRoleForm'),
+      usersTableBody: document.getElementById('usersTableBody'),
+      rolesTableBody: document.getElementById('rolesTableBody'),
+
+      scheduleUserSelect: document.getElementById('scheduleUser'),
+      scheduleDateInput: document.getElementById('scheduleDate'),
+      startTimeInput: document.getElementById('startTime'),
+      endTimeInput: document.getElementById('endTime'),
+      addScheduleForm: document.getElementById('addScheduleForm'),
+      schedulesTableBody: document.getElementById('schedulesTableBody'),
+
+      attendanceRecorderSelect: document.getElementById('attendanceRecorder'),
+      attendanceUserSelect: document.getElementById('attendanceUser'),
+      attendanceDateInput: document.getElementById('attendanceDate'),
+      attendancePresentSelect: document.getElementById('attendancePresent'),
+      recordAttendanceForm: document.getElementById('recordAttendanceForm'),
+      attendanceTableBody: document.getElementById('attendanceTableBody'),
+
+      shiftAssignerSelect: document.getElementById('shiftAssigner'),
+      shiftUserSelect: document.getElementById('shiftUser'),
+      shiftDateInput: document.getElementById('shiftDate'),
+      shiftNameInput: document.getElementById('shiftName'),
+      assignShiftForm: document.getElementById('assignShiftForm'),
+      shiftsTableBody: document.getElementById('shiftsTableBody'),
+
+      trainingAssignerSelect: document.getElementById('trainingAssigner'),
+      trainingUserSelect: document.getElementById('trainingUser'),
+      trainingTitleInput: document.getElementById('trainingTitle'),
+      trainingDateInput: document.getElementById('trainingDate'),
+      assignTrainingForm: document.getElementById('assignTrainingForm'),
+
+      completeTrainingUserSelect: document.getElementById('completeTrainingUser'),
+      completeTrainingTitleSelect: document.getElementById('completeTrainingTitle'),
+      completeTrainingForm: document.getElementById('completeTrainingForm'),
+      trainingsTableBody: document.getElementById('trainingsTableBody'),
+
+      performanceReviewerSelect: document.getElementById('performanceReviewer'),
+      performanceUserSelect: document.getElementById('performanceUser'),
+      performanceDateInput: document.getElementById('performanceDate'),
+      performanceNotesInput: document.getElementById('performanceNotes'),
+      performanceScoreInput: document.getElementById('performanceScore'),
+      addPerformanceForm: document.getElementById('addPerformanceForm'),
+      performanceTableBody: document.getElementById('performanceTableBody'),
+    };
+
+    // Util - show messages in console and optionally on UI
+    function logMessage(msg) {
+      console.log(msg);
+      alert(msg);
+    }
+
+    // Navigation handling between sections
+    function showSection(id) {
+      dom.sections.forEach(sec => {
+        sec.classList.toggle('active', sec.id === id);
+      });
+      dom.navButtons.forEach(btn => {
+        const isActive = btn.getAttribute('aria-controls') === id;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive);
+      });
+    }
+
+    dom.navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        showSection(btn.getAttribute('aria-controls'));
+      });
+    });
+
+    // Add role
+    function addRole(name, permissions) {
+      if (roles.some(r => r.name === name)) {
+        logMessage(`El rol "${name}" ya existe.`);
+        return null;
+      }
+      const role = new Role(name);
+      permissions.forEach(p => role.addPermission(p));
+      roles.push(role);
+      updateRolesUI();
+      updateUsersRoleOptions();
+      return role;
+    }
+
+    // Add user
+    function addUser(id, name, roleName) {
+      if (users.some(u => u.id === id)) {
+        logMessage(`El usuario con ID "${id}" ya existe.`);
+        return null;
+      }
+      const role = roles.find(r => r.name === roleName);
+      if (!role) {
+        logMessage(`Rol "${roleName}" no encontrado.`);
+        return null;
+      }
+      const user = new User(id, name, role);
+      users.push(user);
+      updateUsersUI();
+      updateLoginSelect();
+      updateAllUserSelectors();
+      return user;
+    }
+
+    // Update users table
+    function updateUsersUI() {
+      dom.usersTableBody.innerHTML = '';
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u.id}</td><td>${u.name}</td><td>${u.role.name}</td>`;
+        dom.usersTableBody.appendChild(tr);
+      });
+    }
+
+    // Update roles table
+    function updateRolesUI() {
+      dom.rolesTableBody.innerHTML = '';
+      roles.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.name}</td><td>${[...r.permissions].join(', ')}</td>`;
+        dom.rolesTableBody.appendChild(tr);
+      });
+    }
+
+    // Update role options in user creation form
+    function updateUsersRoleOptions() {
+      dom.userRoleSelect.innerHTML = '';
+      roles.forEach(r => {
+        const option = document.createElement('option');
+        option.value = r.name;
+        option.textContent = r.name;
+        dom.userRoleSelect.appendChild(option);
+      });
+    }
+
+    // Update login user select options
+    function updateLoginSelect() {
+      dom.loginSelect.innerHTML = '';
+      users.forEach(u => {
+        const option = document.createElement('option');
+        option.value = u.id;
+        option.textContent = `${u.name} (${u.role.name})`;
+        dom.loginSelect.appendChild(option);
+      });
+    }
+
+    // Update all user selectors for forms needing user selection
+    function updateAllUserSelectors() {
+      const allSelectors = [
+        dom.userRoleSelect,
+        dom.loginSelect,
+        dom.scheduleUserSelect,
+        dom.attendanceUserSelect,
+        dom.attendanceRecorderSelect,
+        dom.shiftUserSelect,
+        dom.shiftAssignerSelect,
+        dom.trainingUserSelect,
+        dom.trainingAssignerSelect,
+        dom.completeTrainingUserSelect,
+        dom.performanceUserSelect,
+        dom.performanceReviewerSelect,
+      ];
+      allSelectors.forEach(select => {
+        if (!select) return;
+        const currentValue = select.value;
+        select.innerHTML = '';
+        users.forEach(u => {
+          const option = document.createElement('option');
+          option.value = u.id;
+          option.textContent = `${u.name} (${u.role.name})`;
+          select.appendChild(option);
+        });
+        if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
+          select.value = currentValue;
+        }
+      });
+    }
+
+    // Permission checking utility
+    function userCan(user, permission) {
+      if (!user) return false;
+      return user.role.permissions.has(permission);
+    }
+
+    // Schedule management
+    function addSchedule(userId, date, startTime, endTime) {
+      const user = users.find(u => u.id === userId);
+      if (!user) return logMessage('Usuario no encontrado para horario');
+      if (!userCan(user, Permissions.MANAGE_SCHEDULE)) return logMessage(`El usuario ${user.name} no tiene permiso para gestionar horarios.`);
+
+      schedules.push({ user, date, startTime, endTime });
+      updateSchedulesTable();
+      logMessage(`Horario agregado para ${user.name} en fecha ${date} de ${startTime} a ${endTime}`);
+    }
+
+    function updateSchedulesTable() {
+      dom.schedulesTableBody.innerHTML = '';
+      schedules.forEach(({user, date, startTime, endTime}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label-1="Usuario">${user.name}</td><td data-label-2="Fecha">${date}</td><td data-label-3="Inicio">${startTime}</td><td data-label-4="Fin">${endTime}</td>`;
+        dom.schedulesTableBody.appendChild(tr);
+      });
+    }
+
+    // Attendance management
+    function recordAttendance(recorderId, userId, date, present) {
+      const recorder = users.find(u => u.id === recorderId);
+      if (!recorder) return logMessage('Usuario registrador no encontrado');
+      if (!userCan(recorder, Permissions.RECORD_ATTENDANCE)) return logMessage(`${recorder.name} no tiene permiso para registrar asistencia.`);
+      const user = users.find(u => u.id === userId);
+      if (!user) return logMessage('Usuario a registrar no encontrado');
+      attendances.push({ user, date, present });
+      updateAttendanceTable();
+      logMessage(`Asistencia registrada para ${user.name} en fecha ${date}: ${present ? 'Presente' : 'Ausente'}`);
+    }
+
+    function updateAttendanceTable() {
+      dom.attendanceTableBody.innerHTML = '';
+      attendances.forEach(({user, date, present}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label-1="Usuario">${user.name}</td><td data-label-2="Fecha">${date}</td><td data-label-3="Presente">${present ? 'Sí' : 'No'}</td>`;
+        dom.attendanceTableBody.appendChild(tr);
+      });
+    }
+
+    // Shift management
+    function assignShift(assignerId, userId, date, shiftName) {
+      const assigner = users.find(u => u.id === assignerId);
+      if (!assigner) return logMessage('Usuario asignador no encontrado');
+      if (!userCan(assigner, Permissions.ASSIGN_SHIFTS)) return logMessage(`${assigner.name} no tiene permiso para asignar turnos.`);
+      const user = users.find(u => u.id === userId);
+      if (!user) return logMessage('Usuario al que asignar turno no encontrado');
+      shifts.push({ user, date, shiftName });
+      updateShiftsTable();
+      logMessage(`Turno "${shiftName}" asignado para ${user.name} en fecha ${date}`);
+    }
+
+    function updateShiftsTable() {
+      dom.shiftsTableBody.innerHTML = '';
+      shifts.forEach(({user, date, shiftName}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label-1="Usuario">${user.name}</td><td data-label-2="Fecha">${date}</td><td data-label-3="Turno">${shiftName}</td>`;
+        dom.shiftsTableBody.appendChild(tr);
+      });
+    }
+
+    // Trainings management
+    function assignTraining(assignerId, userId, title, date) {
+      const assigner = users.find(u => u.id === assignerId);
+      if (!assigner) return logMessage('Usuario que asigna capacitación no encontrado');
+      if (!userCan(assigner, Permissions.TRACK_TRAININGS)) return logMessage(`${assigner.name} no tiene permiso para asignar capacitaciones.`);
+      const user = users.find(u => u.id === userId);
+      if (!user) return logMessage('Usuario para capacitación no encontrado');
+      trainings.push({ user, title, date, completed: false });
+      updateTrainingsTable();
+      updateCompleteTrainingOptions();
+      logMessage(`Capacitación "${title}" asignada a ${user.name} para fecha ${date}`);
+    }
+
+    function completeTraining(userId, title) {
+      const training = trainings.find(t => t.user.id === userId && t.title === title && !t.completed);
+      if (!training) return logMessage('Capacitación no encontrada o ya completada');
+      training.completed = true;
+      updateTrainingsTable();
+      updateCompleteTrainingOptions();
+      logMessage(`Capacitación "${title}" completada por ${training.user.name}`);
+    }
+
+    function updateTrainingsTable() {
+      dom.trainingsTableBody.innerHTML = '';
+      trainings.forEach(({user, title, date, completed}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label-1="Usuario">${user.name}</td><td data-label-2="Capacitación">${title}</td><td data-label-3="Fecha">${date}</td><td data-label-4="Completada">${completed ? 'Sí' : 'No'}</td>`;
+        dom.trainingsTableBody.appendChild(tr);
+      });
+    }
+
+    function updateCompleteTrainingOptions() {
+      // Fill training titles assigned to user but not completed for the complete training form
+      const userId = dom.completeTrainingUserSelect.value;
+      const pendingTrainings = trainings.filter(t => t.user.id === userId && !t.completed);
+      dom.completeTrainingTitleSelect.innerHTML = '';
+      pendingTrainings.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.title;
+        option.textContent = t.title;
+        dom.completeTrainingTitleSelect.appendChild(option);
+      });
+      if (dom.completeTrainingTitleSelect.options.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = "No hay capacitaciones pendientes";
+        dom.completeTrainingTitleSelect.appendChild(option);
+      }
+    }
+
+    // Performance management
+    function addPerformanceReview(reviewerId, userId, date, notes, score) {
+      const reviewer = users.find(u => u.id === reviewerId);
+      if (!reviewer) return logMessage('Usuario evaluador no encontrado');
+      if (!userCan(reviewer, Permissions.REVIEW_PERFORMANCE)) return logMessage(`${reviewer.name} no tiene permiso para revisar desempeño.`);
+      const user = users.find(u => u.id === userId);
+      if (!user) return logMessage('Usuario evaluado no encontrado');
+      performanceReviews.push({ user, date, notes, score });
+      updatePerformanceTable();
+      logMessage(`Evaluación de desempeño agregada para ${user.name} con puntaje ${score}`);
+    }
+
+    function updatePerformanceTable() {
+      dom.performanceTableBody.innerHTML = '';
+      performanceReviews.forEach(({user, date, notes, score}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label-1="Usuario">${user.name}</td><td data-label-2="Fecha">${date}</td><td data-label-3="Puntaje">${score}</td><td data-label-4="Notas">${notes}</td>`;
+        dom.performanceTableBody.appendChild(tr);
+      });
+    }
+
+    // Setup event handlers
+
+    // Login form
+    dom.loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const selectedUserId = dom.loginSelect.value;
+      currentUser = users.find(u => u.id === selectedUserId);
+      dom.loginWelcome.textContent = `Bienvenido, ${currentUser.name} (${currentUser.role.name})`;
+      logMessage(`Sesión iniciada como ${currentUser.name}`);
+    });
+
+    // Add role form
+    dom.addRoleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = dom.roleNameInput.value.trim();
+      const perms = [...dom.rolePermissionsSelect.selectedOptions].map(opt => opt.value);
+      if (!name) return logMessage('El nombre del rol es obligatorio');
+      if (perms.length === 0) return logMessage('Seleccione al menos un permiso para el rol');
+      addRole(name, perms);
+      dom.roleNameInput.value = '';
+      dom.rolePermissionsSelect.selectedIndex = -1;
+      logMessage(`Rol "${name}" agregado`);
+    });
+
+    // Add user form
+    dom.addUserForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const id = dom.userIdInput.value.trim();
+      const name = dom.userNameInput.value.trim();
+      const roleName = dom.userRoleSelect.value;
+      if (!id || !name) return logMessage('ID y Nombre son obligatorios');
+      addUser(id, name, roleName);
+      dom.userIdInput.value = '';
+      dom.userNameInput.value = '';
+      logMessage(`Usuario "${name}" agregado`);
+    });
+
+    // Add schedule form
+    dom.addScheduleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para agregar horarios');
+      const userId = dom.scheduleUserSelect.value;
+      const date = dom.scheduleDateInput.value;
+      const startTime = dom.startTimeInput.value;
+      const endTime = dom.endTimeInput.value;
+      if (new Date(`1970-01-01T${endTime}`) <= new Date(`1970-01-01T${startTime}`)) {
+        return logMessage('La hora de fin debe ser posterior a la hora de inicio.');
+      }
+      addSchedule(currentUser.id, date, startTime, endTime);
+      dom.addScheduleForm.reset();
+    });
+
+    // Record attendance form
+    dom.recordAttendanceForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para registrar asistencia');
+      const recorderId = dom.attendanceRecorderSelect.value;
+      if (recorderId !== currentUser.id) return logMessage('Solo puede registrar asistencia si está logueado como el usuario registrador.');
+      const userId = dom.attendanceUserSelect.value;
+      const date = dom.attendanceDateInput.value;
+      const present = dom.attendancePresentSelect.value === 'true';
+      recordAttendance(recorderId, userId, date, present);
+    });
+
+    // Assign shift form
+    dom.assignShiftForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para asignar turnos');
+      const assignerId = dom.shiftAssignerSelect.value;
+      if (assignerId !== currentUser.id) return logMessage('Solo puede asignar turnos si está logueado como el usuario asignador.');
+      const userId = dom.shiftUserSelect.value;
+      const date = dom.shiftDateInput.value;
+      const shiftName = dom.shiftNameInput.value.trim();
+      if (!shiftName) return logMessage('Nombre del turno es obligatorio');
+      assignShift(assignerId, userId, date, shiftName);
+      dom.assignShiftForm.reset();
+    });
+
+    // Assign training form
+    dom.assignTrainingForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para asignar capacitaciones');
+      const assignerId = dom.trainingAssignerSelect.value;
+      if (assignerId !== currentUser.id) return logMessage('Solo puede asignar capacitaciones si está logueado como el usuario asignador.');
+      const userId = dom.trainingUserSelect.value;
+      const title = dom.trainingTitleInput.value.trim();
+      const date = dom.trainingDateInput.value;
+      if (!title) return logMessage('Nombre de la capacitación es obligatorio');
+      assignTraining(assignerId, userId, title, date);
+      dom.assignTrainingForm.reset();
+    });
+
+    // Complete training form
+    dom.completeTrainingForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para completar capacitaciones');
+      const userId = dom.completeTrainingUserSelect.value;
+      if (userId !== currentUser.id) return logMessage('Solo puede completar capacitaciones si está logueado como el usuario que completa.');
+      const title = dom.completeTrainingTitleSelect.value;
+      if (!title) return logMessage('Seleccione una capacitación pendiente');
+      completeTraining(userId, title);
+      // Refresh options after completion
+      updateCompleteTrainingOptions();
+    });
+
+    // Update training titles options when completion user changes
+    dom.completeTrainingUserSelect.addEventListener('change', () => {
+      updateCompleteTrainingOptions();
+    });
+
+    // Add performance form
+    dom.addPerformanceForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!currentUser) return logMessage('Debe iniciar sesión para agregar evaluaciones');
+      const reviewerId = dom.performanceReviewerSelect.value;
+      if (reviewerId !== currentUser.id) return logMessage('Solo puede evaluar si está logueado como el usuario evaluador.');
+      const userId = dom.performanceUserSelect.value;
+      const date = dom.performanceDateInput.value;
+      const notes = dom.performanceNotesInput.value.trim();
+      const score = parseInt(dom.performanceScoreInput.value, 10);
+      if (!notes) return logMessage('Las notas son obligatorias.');
+      if (isNaN(score) || score < 1 || score > 10) return logMessage('Puntaje debe estar entre 1 y 10.');
+      addPerformanceReview(reviewerId, userId, date, notes, score);
+      dom.addPerformanceForm.reset();
+    });
+
+    // Initialize roles and users with sample data
+    function initSampleData() {
+      const admin = addRole('Administrador', [
+        Permissions.MANAGE_SCHEDULE,
+        Permissions.RECORD_ATTENDANCE,
+        Permissions.ASSIGN_SHIFTS,
+        Permissions.MANAGE_ROLES,
+        Permissions.TRACK_TRAININGS,
+        Permissions.REVIEW_PERFORMANCE
+      ]);
+      const doctor = addRole('Doctor', [Permissions.VIEW_SCHEDULE, Permissions.TRACK_TRAININGS]);
+      const nurse = addRole('Enfermero', [Permissions.VIEW_SCHEDULE, Permissions.RECORD_ATTENDANCE]);
+
+      addUser('u1', 'Alice', 'Administrador');
+      addUser('u2', 'Bob', 'Doctor');
+      addUser('u3', 'Carol', 'Enfermero');
+    }
+
+    // Run initialization
+    initSampleData();
+
+    // Show login section initially
+    showSection('sec-login');
+
+  })();
+</script>
+
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
+
+```
+
