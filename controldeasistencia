@@ -1,0 +1,473 @@
+import java.util.*;
+import java.time.*;
+
+// Enums for Permissions
+enum Permission {
+    VIEW_SCHEDULE,
+    MANAGE_SCHEDULE,
+    RECORD_ATTENDANCE,
+    ASSIGN_SHIFTS,
+    MANAGE_ROLES,
+    TRACK_TRAININGS,
+    REVIEW_PERFORMANCE
+}
+
+// Role class
+class Role {
+    private String name;
+    private Set<Permission> permissions;
+
+    public Role(String name) {
+        this.name = name;
+        this.permissions = new HashSet<>();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void addPermission(Permission p) {
+        permissions.add(p);
+    }
+
+    public void removePermission(Permission p) {
+        permissions.remove(p);
+    }
+
+    public boolean hasPermission(Permission p) {
+        return permissions.contains(p);
+    }
+
+    public Set<Permission> getPermissions() {
+        return Collections.unmodifiableSet(permissions);
+    }
+
+    @Override
+    public String toString() {
+        return name + " " + permissions;
+    }
+}
+
+// User class
+class User {
+    private String id;
+    private String name;
+    private Role role;
+
+    public User(String id, String name, Role role) {
+        this.id = id;
+        this.name = name;
+        this.role = role;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean can(Permission p) {
+        return role != null && role.hasPermission(p);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("User{id='%s', name='%s', role='%s'}", id, name, role.getName());
+    }
+}
+
+// Schedule class - represents work hours for a user on a date
+class Schedule {
+    private User user;
+    private LocalDate date;
+    private LocalTime startTime;
+    private LocalTime endTime;
+
+    public Schedule(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
+        this.user = user;
+        this.date = date;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Schedule{user=%s, date=%s, %s-%s}", user.getName(), date, startTime, endTime);
+    }
+}
+
+// Attendance class
+class Attendance {
+    private User user;
+    private LocalDate date;
+    private boolean present;
+
+    public Attendance(User user, LocalDate date, boolean present) {
+        this.user = user;
+        this.date = date;
+        this.present = present;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public boolean isPresent() {
+        return present;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Attendance{user=%s, date=%s, present=%b}", user.getName(), date, present);
+    }
+}
+
+// Shift class - a shift assigned (could be different from schedule)
+class Shift {
+    private User user;
+    private LocalDate date;
+    private String shiftName;
+
+    public Shift(User user, LocalDate date, String shiftName) {
+        this.user = user;
+        this.date = date;
+        this.shiftName = shiftName;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public String getShiftName() {
+        return shiftName;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Shift{user=%s, date=%s, shift=%s}", user.getName(), date, shiftName);
+    }
+}
+
+// Training class
+class Training {
+    private String title;
+    private LocalDate date;
+    private User user;
+    private boolean completed;
+
+    public Training(String title, LocalDate date, User user) {
+        this.title = title;
+        this.date = date;
+        this.user = user;
+        this.completed = false;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void completeTraining() {
+        completed = true;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Training{title='%s', user=%s, date=%s, completed=%b}", title, user.getName(), date, completed);
+    }
+}
+
+// PerformanceReview class
+class PerformanceReview {
+    private User user;
+    private LocalDate date;
+    private String reviewNotes;
+    private int score; // Example: 1-10
+
+    public PerformanceReview(User user, LocalDate date, String reviewNotes, int score) {
+        this.user = user;
+        this.date = date;
+        this.reviewNotes = reviewNotes;
+        this.score = score;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public String getReviewNotes() {
+        return reviewNotes;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("PerformanceReview{user=%s, date=%s, score=%d, notes='%s'}", user.getName(), date, score, reviewNotes);
+    }
+}
+
+// HospitalControl System
+public class HospitalControl {
+    private Map<String, User> users = new HashMap<>();
+    private Map<String, Role> roles = new HashMap<>();
+    private List<Schedule> schedules = new ArrayList<>();
+    private List<Attendance> attendances = new ArrayList<>();
+    private List<Shift> shifts = new ArrayList<>();
+    private List<Training> trainings = new ArrayList<>();
+    private List<PerformanceReview> performanceReviews = new ArrayList<>();
+
+    // Role and Permission management
+    public void addRole(Role role) {
+        roles.put(role.getName(), role);
+    }
+
+    public Role getRole(String roleName) {
+        return roles.get(roleName);
+    }
+
+    public void addUser(User user) {
+        users.put(user.getId(), user);
+    }
+
+    public User getUser(String userId) {
+        return users.get(userId);
+    }
+
+    // Gestion de horarios (Schedules)
+    public void addSchedule(User user, LocalDate date, LocalTime start, LocalTime end) {
+        if (user.can(Permission.MANAGE_SCHEDULE)) {
+            Schedule newSchedule = new Schedule(user, date, start, end);
+            schedules.add(newSchedule);
+            System.out.println("Schedule added: " + newSchedule);
+        } else {
+            System.out.println(user.getName() + " does not have permission to manage schedules.");
+        }
+    }
+
+    public List<Schedule> getSchedulesByUser(User user) {
+        List<Schedule> result = new ArrayList<>();
+        for (Schedule s : schedules) {
+            if (s.getUser().equals(user)) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    // Control de asistencia (Attendance)
+    public void recordAttendance(User recorder, User user, LocalDate date, boolean present) {
+        if (recorder.can(Permission.RECORD_ATTENDANCE)) {
+            Attendance attendance = new Attendance(user, date, present);
+            attendances.add(attendance);
+            System.out.println("Attendance recorded: " + attendance);
+        } else {
+            System.out.println(recorder.getName() + " does not have permission to record attendance.");
+        }
+    }
+
+    public List<Attendance> getAttendanceByUser(User user) {
+        List<Attendance> result = new ArrayList<>();
+        for (Attendance a : attendances) {
+            if (a.getUser().equals(user)) {
+                result.add(a);
+            }
+        }
+        return result;
+    }
+
+    // Asignacion de turnos (Shift assignments)
+    public void assignShift(User assigner, User user, LocalDate date, String shiftName) {
+        if (assigner.can(Permission.ASSIGN_SHIFTS)) {
+            Shift shift = new Shift(user, date, shiftName);
+            shifts.add(shift);
+            System.out.println("Shift assigned: " + shift);
+        } else {
+            System.out.println(assigner.getName() + " does not have permission to assign shifts.");
+        }
+    }
+
+    public List<Shift> getShiftsByUser(User user) {
+        List<Shift> result = new ArrayList<>();
+        for (Shift s : shifts) {
+            if (s.getUser().equals(user)) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    // Seguimiento de capacitaciones (Training tracking)
+    public void assignTraining(User assigner, User user, String trainingTitle, LocalDate date) {
+        if (assigner.can(Permission.TRACK_TRAININGS)) {
+            Training training = new Training(trainingTitle, date, user);
+            trainings.add(training);
+            System.out.println("Training assigned: " + training);
+        } else {
+            System.out.println(assigner.getName() + " does not have permission to assign trainings.");
+        }
+    }
+
+    public void completeTraining(User user, String trainingTitle) {
+        for (Training t : trainings) {
+            if (t.getUser().equals(user) && t.getTitle().equals(trainingTitle) && !t.isCompleted()) {
+                t.completeTraining();
+                System.out.println("Training completed: " + t);
+                return;
+            }
+        }
+        System.out.println("Training not found or already completed for user.");
+    }
+
+    public List<Training> getTrainingsByUser(User user) {
+        List<Training> result = new ArrayList<>();
+        for (Training t : trainings) {
+            if (t.getUser().equals(user)) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
+    // Seguimiento de desempeño (Performance tracking)
+    public void addPerformanceReview(User reviewer, User user, LocalDate date, String notes, int score) {
+        if (reviewer.can(Permission.REVIEW_PERFORMANCE)) {
+            PerformanceReview review = new PerformanceReview(user, date, notes, score);
+            performanceReviews.add(review);
+            System.out.println("Performance review added: " + review);
+        } else {
+            System.out.println(reviewer.getName() + " does not have permission to review performance.");
+        }
+    }
+
+    public List<PerformanceReview> getPerformanceReviewsByUser(User user) {
+        List<PerformanceReview> result = new ArrayList<>();
+        for (PerformanceReview pr : performanceReviews) {
+            if (pr.getUser().equals(user)) {
+                result.add(pr);
+            }
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        HospitalControl system = new HospitalControl();
+
+        // Create roles
+        Role admin = new Role("Administrator");
+        admin.addPermission(Permission.MANAGE_SCHEDULE);
+        admin.addPermission(Permission.RECORD_ATTENDANCE);
+        admin.addPermission(Permission.ASSIGN_SHIFTS);
+        admin.addPermission(Permission.MANAGE_ROLES);
+        admin.addPermission(Permission.TRACK_TRAININGS);
+        admin.addPermission(Permission.REVIEW_PERFORMANCE);
+
+        Role doctor = new Role("Doctor");
+        doctor.addPermission(Permission.VIEW_SCHEDULE);
+        doctor.addPermission(Permission.TRACK_TRAININGS);
+
+        Role nurse = new Role("Nurse");
+        nurse.addPermission(Permission.VIEW_SCHEDULE);
+        nurse.addPermission(Permission.RECORD_ATTENDANCE);
+
+        // Add roles to system
+        system.addRole(admin);
+        system.addRole(doctor);
+        system.addRole(nurse);
+
+        // Create users
+        User u1 = new User("u1", "Alice", admin);
+        User u2 = new User("u2", "Bob", doctor);
+        User u3 = new User("u3", "Carol", nurse);
+
+        system.addUser(u1);
+        system.addUser(u2);
+        system.addUser(u3);
+
+        // Admin adds schedules
+        system.addSchedule(u1, LocalDate.of(2024, 6, 1), LocalTime.of(8, 0), LocalTime.of(16, 0));
+        system.addSchedule(u1, LocalDate.of(2024, 6, 1), LocalTime.of(9, 0), LocalTime.of(17, 0)); // Alice's schedule
+        system.addSchedule(u3, LocalDate.of(2024, 6, 1), LocalTime.of(8, 0), LocalTime.of(16, 0)); // Carol's schedule successfully because u3 does not have MANAGE_SCHEDULE perm
+
+        // Bob tries to add schedule but no permission
+        system.addSchedule(u2, LocalDate.of(2024, 6, 1), LocalTime.of(10, 0), LocalTime.of(18, 0));
+
+        // Record attendance
+        system.recordAttendance(u1, u3, LocalDate.of(2024, 6, 1), true);
+
+        // Assign shifts
+        system.assignShift(u1, u2, LocalDate.of(2024, 6, 1), "Morning Shift");
+        // Bob tries to assign shift - no permission
+        system.assignShift(u2, u3, LocalDate.of(2024, 6, 1), "Night Shift");
+
+        // Assign and complete training
+        system.assignTraining(u1, u2, "Advanced Surgery", LocalDate.of(2024, 5, 5));
+        system.completeTraining(u2, "Advanced Surgery");
+
+        // Performance review
+        system.addPerformanceReview(u1, u2, LocalDate.of(2024, 6, 1), "Excellent work in surgery.", 9);
+
+        // Display data retrieval example:
+        System.out.println("\nSchedules for Alice:");
+        for (Schedule s : system.getSchedulesByUser(u1)) {
+            System.out.println(s);
+        }
+
+        System.out.println("\nTrainings for Bob:");
+        for (Training t : system.getTrainingsByUser(u2)) {
+            System.out.println(t);
+        }
+
+        System.out.println("\nPerformance reviews for Bob:");
+        for (PerformanceReview pr : system.getPerformanceReviewsByUser(u2)) {
+            System.out.println(pr);
+        }
+    }
+}
